@@ -10,7 +10,7 @@ namespace TestApp
 	{
 		private static double _realLoad;
 		private static readonly BlockingCollection<float> CpuLoadValues = new BlockingCollection<float>();
-		private const int AnalysisLimit = 6;
+		private const int AnalysisLimit = 3000;
 
 		static void Main(string[] args)
 		{
@@ -68,7 +68,7 @@ namespace TestApp
 			limit.Start();
 			var watch = new Stopwatch();
 			watch.Start();
-			while (limit.ElapsedMilliseconds * 1000 < AnalysisLimit)
+			while (limit.ElapsedMilliseconds < AnalysisLimit)
 			{
 				CpuLoadValues.Add(GetCpuLoad());
 				if (watch.ElapsedMilliseconds == target)
