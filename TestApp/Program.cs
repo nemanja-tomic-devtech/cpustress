@@ -8,16 +8,16 @@ namespace TestApp
 {
 	class Program
 	{
-		private static double _offSet;
+		private static double _realLoad;
 		private static readonly BlockingCollection<float> CpuLoadValues = new BlockingCollection<float>();
 		private const int AnalysisLimit = 6;
 
 		static void Main(string[] args)
 		{
-			Console.WriteLine("Enter a desired CPU load (37 - 100 supported) in percentage:");
+			Console.WriteLine("Enter a desired CPU load in percentage:");
 			var loadString = Console.ReadLine();
 			int load;
-			while (!int.TryParse(loadString, out load) || load < 37 || load > 100)
+			while (!int.TryParse(loadString, out load) || load > 100)
 			{
 				Console.WriteLine("Invalid load format, try again:");
 				loadString = Console.ReadLine();
@@ -27,10 +27,9 @@ namespace TestApp
 			PrepareVariables(load);
 			Console.WriteLine("System ready!");
 
-			Console.WriteLine("Stressing the CPU on {0}% load...", load);
-
-			load = load - 37;
-
+			load = Math.Abs(load - (int)Math.Round(_realLoad));
+			Console.WriteLine("Stressing the CPU on {0}% load...", loadString);
+			
 			for (var cpu = 0; cpu <= Environment.ProcessorCount; cpu++)
 			{
 				new Thread(() => Sleep(load)).Start();
@@ -45,7 +44,11 @@ namespace TestApp
 			{
 				for (var cpu = 0; cpu <= Environment.ProcessorCount; cpu++)
 				{
-					new Thread(() => Analyze(target)).Start();
+					var thread = new Thread(() => Analyze(target));
+					thread.Start();
+					while (thread.IsAlive)
+					{
+					}
 				}
 				CpuLoadValues.CompleteAdding();
 			});
@@ -53,7 +56,7 @@ namespace TestApp
 			{
 				foreach (var loadValue in CpuLoadValues.GetConsumingEnumerable())
 				{
-					_offSet = Math.Round((_offSet + loadValue) / 2);
+					_realLoad = Math.Round((_realLoad + loadValue) / 2);
 				}
 			});
 			Task.WaitAll(producer, consumer);
